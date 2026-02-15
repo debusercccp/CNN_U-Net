@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  cnn-bio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cnn-bio-app
+    image: cnn-bio:latest
+    
+    # Mount volumes for datasets and code
+    volumes:
+      # Project code
+      - ./:/app
+      
+      # Dataset volume - map your local datasets directory
+      - ./datasets:/app/datasets
+      
+      # Output/results volume
+      - ./results:/app/results
+    
+    # Working directory
+    working_dir: /app
+    
+    # Keep container running
+    stdin_open: true
+    tty: true
+    
+    # Environment variables
+    environment:
+      - DATASET_PATH=/app/datasets
+      - PYTHONUNBUFFERED=1
+    
+    # Resource limits (optional, adjust as needed)
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 4G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 2G
