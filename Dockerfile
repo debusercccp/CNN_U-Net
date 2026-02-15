@@ -6,8 +6,8 @@ WORKDIR /app
 
 # Install system dependencies required for OpenCV and other packages
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
+    libopencv-dev \
+    python3-opencv \
     libsm6 \
     libxext6 \
     libxrender-dev \
@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements.txt
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with longer timeout
+RUN pip install --no-cache-dir --default-timeout=120 -r requirements.txt
 
 # Copy project files
 COPY CNN_pytorch.py .
