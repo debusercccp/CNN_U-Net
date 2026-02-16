@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   cnn-bio:
     build:
@@ -18,6 +16,9 @@ services:
       
       # Output/results volume
       - ./results:/app/results
+      
+      # Mount actual dataset directory
+      - /home/noya/Documenti/Datasets:/home/noya/Documenti/Datasets
     
     # Working directory
     working_dir: /app

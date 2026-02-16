@@ -12,14 +12,13 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
-from datetime import datetime
 import copy
 from sklearn.metrics import accuracy_score
 
 
 # ==================== Configuration ====================
 # Default dataset path
-DEFAULT_DATASET = "/home/rocco/Work/Datasets/Segmentazione"
+DEFAULT_DATASET = "/home/noya/Documenti/Datasets/Segmentation"
 
 # Check for command-line argument
 if len(sys.argv) > 1:
@@ -74,7 +73,7 @@ def load_training_data(dataset_path, params):
     
     print(f"Training images found: {length_training}")
     print(f"Validation images found: {length_validation}")
-    print(f"No validation data available - using training data only")
+    print("No validation data available - using training data only")
     
     dim = (params['y'], params['x'])
     Xlist = {}
@@ -119,7 +118,7 @@ def load_training_data(dataset_path, params):
     y_val = np.empty((0, params['x'], params['y'], params['n_channels_mask']))
     Xlist['validation'] = X_val
     Ylist['validation'] = y_val
-    print(f"Validation data: empty (no validation files found)")
+    print("Validation data: empty (no validation files found)")
     
     return Xlist, Ylist
 
@@ -257,10 +256,10 @@ def train_model(model, train_loader, params, device, output_dir):
     
     steps_per_epoch = int(np.ceil(params["length_training"] / params["batch_size"]))
     
-    print(f"Training setup complete:")
-    print(f"  - Loss function: BCELoss")
+    print("Training setup complete:")
+    print("  - Loss function: BCELoss")
     print(f"  - Optimizer: Adam (lr={params['learningRate']})")
-    print(f"  - LR Scheduler: ReduceLROnPlateau")
+    print("  - LR Scheduler: ReduceLROnPlateau")
     print(f"  - Steps per epoch: {steps_per_epoch}")
     print(f"  - Total epochs: {params['nEpoches']}")
     
@@ -323,7 +322,7 @@ def train_model(model, train_loader, params, device, output_dir):
         
         print(f"\nEpoch {epoch+1}/{params['nEpoches']} - Loss: {avg_loss:.4f}, Accuracy: {avg_accuracy:.4f}\n")
     
-    print(f"\nTraining completed!")
+    print("\nTraining completed!")
     print(f"Final loss: {train_losses[-1]:.4f}")
     print(f"Best checkpoint: {output_dir}/best_model.pth")
     
@@ -368,7 +367,7 @@ def plot_training_history(history):
         plt.tight_layout()
         plt.show()
         
-        print(f"Training metrics plotted")
+        print("Training metrics plotted")
         print(f"  Final Loss: {history.history['loss'][-1]:.4f}")
         print(f"  Final Accuracy: {history.history['accuracy'][-1]:.4f}")
     else:
@@ -526,11 +525,11 @@ if __name__ == "__main__":
     train_dataset = SegmentationDataset(X_train, Y_train, augment=True)
     train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], shuffle=True, num_workers=0)
     
-    print(f"PyTorch Data augmentation pipeline created")
-    print(f"Training dataloader ready:")
+    print("PyTorch Data augmentation pipeline created")
+    print("Training dataloader ready:")
     print(f"  - Batch size: {params['batch_size']}")
     print(f"  - Total batches: {len(train_loader)}")
-    print(f"  - Augmentation: Enabled (random flip)\n")
+    print("  - Augmentation: Enabled (random flip)\n")
     
     # Create model
     model = UNet(in_channels=1, out_channels=1).to(device)

@@ -11,14 +11,13 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from datetime import datetime
 import copy
 from sklearn.metrics import accuracy_score
 
 
 # ==================== Configuration ====================
 # Default dataset path
-DEFAULT_DATASET = "/home/rocco/Work/Datasets/Segmentazione"
+DEFAULT_DATASET = "/home/noya/Documenti/Datasets/Segmentation"
 
 # Check for command-line argument
 if len(sys.argv) > 1:
@@ -73,7 +72,7 @@ def load_training_data(dataset_path, params):
     
     print(f"Training images found: {length_training}")
     print(f"Validation images found: {length_validation}")
-    print(f"No validation data available - using training data only")
+    print("No validation data available - using training data only")
     
     dim = (params['y'], params['x'])
     Xlist = {}
@@ -118,7 +117,7 @@ def load_training_data(dataset_path, params):
     y_val = np.empty((0, params['x'], params['y'], params['n_channels_mask']))
     Xlist['validation'] = X_val
     Ylist['validation'] = y_val
-    print(f"Validation data: empty (no validation files found)")
+    print("Validation data: empty (no validation files found)")
     
     return Xlist, Ylist
 
@@ -151,10 +150,10 @@ def create_data_generator(X_train, Y_train, params):
     
     steps_per_epoch = len(X_train) // params['batch_size']
     
-    print(f"TensorFlow Data augmentation pipeline created")
-    print(f"Training data generator ready:")
+    print("TensorFlow Data augmentation pipeline created")
+    print("Training data generator ready:")
     print(f"  - Batch size: {params['batch_size']}")
-    print(f"  - Augmentation: Enabled (flip left/right, flip up/down)")
+    print("  - Augmentation: Enabled (flip left/right, flip up/down)")
     print(f"  - Steps per epoch: {steps_per_epoch}")
     
     return train_dataset, steps_per_epoch
@@ -228,8 +227,8 @@ def train_model(model, train_generator, steps_per_epoch, params, output_dir):
         metrics=['accuracy']
     )
     
-    print(f"Training setup complete:")
-    print(f"  - Loss function: binary_crossentropy")
+    print("Training setup complete:")
+    print("  - Loss function: binary_crossentropy")
     print(f"  - Optimizer: Adam (lr={params['learningRate']})")
     print(f"  - Steps per epoch: {steps_per_epoch}")
     print(f"  - Total epochs: {params['nEpoches']}")
@@ -266,7 +265,7 @@ def train_model(model, train_generator, steps_per_epoch, params, output_dir):
         verbose=1
     )
     
-    print(f"\nTraining completed!")
+    print("\nTraining completed!")
     print(f"Best checkpoint: {output_dir}/best_model.h5")
     
     return model, history
@@ -301,7 +300,7 @@ def plot_training_history(history):
         plt.tight_layout()
         plt.show()
         
-        print(f"Training metrics plotted")
+        print("Training metrics plotted")
         print(f"  Final Loss: {history.history['loss'][-1]:.4f}")
         print(f"  Final Accuracy: {history.history['accuracy'][-1]:.4f}")
     else:
@@ -454,7 +453,7 @@ if __name__ == "__main__":
     
     # Create model
     model = create_unet_model(input_shape=(params['x'], params['y'], params['n_channels']), num_classes=1)
-    print(f"\nU-Net model created")
+    print("\nU-Net model created")
     print(f"Total parameters: {model.count_params():,}\n")
     
     # Train model
