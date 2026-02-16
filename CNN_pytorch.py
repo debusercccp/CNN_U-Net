@@ -17,8 +17,8 @@ from sklearn.metrics import accuracy_score
 
 
 # ==================== Configuration ====================
-# Default dataset path
-DEFAULT_DATASET = "/home/noya/Documenti/Datasets/Segmentation"
+# Default dataset path (use Docker mount point)
+DEFAULT_DATASET = "/app/datasets/Segmentation"
 
 # Check for command-line argument
 if len(sys.argv) > 1:
@@ -52,20 +52,29 @@ params = {
 
 # ==================== Data Loading ====================
 def load_training_data(dataset_path, params):
-    """Load training images and masks"""
+    """Load training images and masks from images/files/ directory where masks end with _mask.png"""
     
-    modality = ['training']
+    # Define directories - check for both images/ and images/files/
+    training_dir = os.path.join(dataset_path, "training")
+    images_files_dir = os.path.join(training_dir, "images", "files")
+    images_dir = os.path.join(training_dir, "images")
     
-    # Calculate dataset lengths
-    training_dir = os.path.join(dataset_path, "training/image/files")
-    if os.path.exists(training_dir):
-        all_files = os.listdir(training_dir)
-        image_files = [f for f in all_files if not f.endswith('_mask.png') and f.endswith('.png')]
-        length_training = len(image_files)
+    # Use images/files/ if it exists, otherwise fall back to images/
+    if os.path.exists(images_files_dir):
+        data_dir = images_files_dir
+        print(f"Using images/files/ directory: {data_dir}")
+    elif os.path.exists(images_dir):
+        data_dir = images_dir
+        print(f"Using images/ directory: {data_dir}")
     else:
-        length_training = 0
-        image_files = []
+        print(f"ERROR: No images directory found at {images_dir}")
+        return {}, {}
     
+    # Get list of unique image files (exclude _mask files)
+    all_files = sorted([f for f in os.listdir(data_dir) if f.endswith('.png')])
+    image_files = sorted(list(set([f for f in all_files if not f.endswith('_mask.png')])))
+    
+    length_training = len(image_files)
     length_validation = 0
     
     params['length_training'] = length_training
@@ -85,29 +94,40 @@ def load_training_data(dataset_path, params):
     y_train = np.empty((params['length_training'], params['x'], params['y'], params['n_channels_mask']))
     
     print("\nLoading training data...")
-    for im in sorted(image_files):
-        if not im.endswith('_mask.png'):
-            image_path = os.path.join(training_dir, im)
-            mask_path = os.path.join(training_dir, im.replace('.png', '_mask.png'))
-            
-            # Load and process image
-            image = cv2.imread(image_path, 0)
-            if image is not None:
-                image = cv2.resize(image, dim)
-                mea = np.mean(image)
-                ss = np.std(image)
-                image = (image - mea) / ss
-                X_train[ipp, :, :, 0] = image
-            
-            # Load and process mask
-            if os.path.exists(mask_path):
-                mask = cv2.imread(mask_path, 0)
-                if mask is not None:
-                    mask = cv2.resize(mask, dim)
-                    mask = mask / 255
-                    y_train[ipp, :, :, 0] = mask
-            
-            ipp += 1
+    for im in image_files:
+        image_path = os.path.join(data_dir, im)
+        
+        # Construct mask path by inserting _mask before .png
+        base_name = im.rsplit('.', 1)[0]  # Remove extension
+        mask_filename = f"{base_name}_mask.png"
+        mask_path = os.path.join(data_dir, mask_filename)
+        
+        # Load and process image
+        image = cv2.imread(image_path, 0)
+        if image is not None:
+            image = cv2.resize(image, dim)
+            mea = np.mean(image)
+            ss = np.std(image)
+            image = (image - mea) / ss
+            X_train[ipp, :, :, 0] = image
+            print(f"  Loaded image: {im}")
+        else:
+            print(f"  ERROR: Failed to load image: {im}")
+        
+        # Load and process mask
+        if os.path.exists(mask_path):
+            mask = cv2.imread(mask_path, 0)
+            if mask is not None:
+                mask = cv2.resize(mask, dim)
+                mask = mask / 255
+                y_train[ipp, :, :, 0] = mask
+                print(f"  Loaded mask: {mask_filename}")
+            else:
+                print(f"  ERROR: Failed to load mask: {mask_filename}")
+        else:
+            print(f"  WARNING: Mask not found: {mask_path}")
+        
+        ipp += 1
     
     Xlist['training'] = X_train
     Ylist['training'] = y_train
@@ -434,38 +454,54 @@ def compute_dice(test_mask, pred):
 def make_prediction(model, device, dataset, params):
     """Make predictions on test data"""
     
-    test_image_path = os.path.join(dataset, "MCUCXR_0254_imm.png")
-    test_mask_path = os.path.join(dataset, "MCUCXR_0254.png")
+    # Try to find test image/mask in common locations
+    training_dir = os.path.join(dataset, "training", "images", "files")
+    if not os.path.exists(training_dir):
+        training_dir = os.path.join(dataset, "training", "images")
     
-    test_image = None
+    # Look for any image file to test on (first non-mask image)
+    test_image_path = None
+    test_mask_path = None
+    
+    if os.path.exists(training_dir):
+        all_files = sorted([f for f in os.listdir(training_dir) if f.endswith('.png')])
+        for f in all_files:
+            if not f.endswith('_mask.png'):
+                test_image_path = os.path.join(training_dir, f)
+                base_name = f.rsplit('.', 1)[0]
+                test_mask_path = os.path.join(training_dir, f"{base_name}_mask.png")
+                break
+    
+    test_image_tensor = None
+    test_image_np = None
     test_mask = None
     
-    if os.path.exists(test_image_path):
-        test_image = cv2.imread(test_image_path, 0)
-        test_image = cv2.resize(test_image, (params["y"], params["x"]))
-        mean_ = np.mean(test_image)
-        test_image = test_image - mean_
-        std = np.std(test_image)
-        test_image = test_image / std
-        test_image = torch.from_numpy(test_image).float().unsqueeze(0).unsqueeze(0).to(device)
-        print(f"Test image loaded: {test_image.shape}")
+    if test_image_path and os.path.exists(test_image_path):
+        test_image_np = cv2.imread(test_image_path, 0)
+        test_image_np = cv2.resize(test_image_np, (params["y"], params["x"]))
+        mean_ = np.mean(test_image_np)
+        test_image_np = test_image_np - mean_
+        std = np.std(test_image_np)
+        test_image_np = test_image_np / std
+        test_image_tensor = torch.from_numpy(test_image_np).float().unsqueeze(0).unsqueeze(0).to(device)
+        print(f"Test image loaded: {test_image_tensor.shape}")
     else:
-        print(f"Test image not found: {test_image_path}")
+        print(f"Test image not found")
     
-    if os.path.exists(test_mask_path):
+    if test_mask_path and os.path.exists(test_mask_path):
         test_mask = cv2.imread(test_mask_path, 0)
         test_mask = cv2.resize(test_mask, (params["y"], params["x"]))
         print(f"Test mask loaded: {test_mask.shape}")
     else:
-        print(f"Test mask not found: {test_mask_path}")
+        print(f"Test mask not found")
     
     # Make prediction
     prediction = None
     pred = None
-    if test_image is not None:
+    if test_image_tensor is not None:
         model.eval()
         with torch.no_grad():
-            prediction = model(test_image).cpu().numpy()
+            prediction = model(test_image_tensor).cpu().numpy()
         
         pred = copy.copy(prediction)
         pred[pred > 0.5] = 1
@@ -474,7 +510,12 @@ def make_prediction(model, device, dataset, params):
     else:
         print("Cannot make prediction - no test image")
     
-    return test_image, test_mask, prediction, pred
+    # Convert test_image to numpy array format for plotting (add batch/channel dims if needed)
+    test_image_plot = None
+    if test_image_np is not None:
+        test_image_plot = np.expand_dims(np.expand_dims(test_image_np, axis=0), axis=-1)
+    
+    return test_image_plot, test_mask, prediction, pred
 
 
 def plot_predictions(test_image, test_mask, prediction, pred):
@@ -536,8 +577,13 @@ if __name__ == "__main__":
     print(f"U-Net model created (device: {device})")
     print(f"Total parameters: {sum(p.numel() for p in model.parameters()):,}\n")
     
-    # Train model
-    output_dir = "/home/rocco/model_checkpoints_pytorch"
+    # Train model with output directory in results folder
+    if dataset.startswith("/app/"):
+        # Docker path
+        output_dir = "/app/results/model_checkpoints_pytorch"
+    else:
+        # Local path
+        output_dir = os.path.join(os.path.dirname(os.path.dirname(dataset)), "results", "model_checkpoints_pytorch")
     model, history = train_model(model, train_loader, params, device, output_dir)
     
     # Plot training history

@@ -1,19 +1,61 @@
+# Git and version control
 .git
 .gitignore
+.gitattributes
+
+# Virtual Environments
 .venv
-.vscode
+venv
+env
+ENV
+
+# Python cache
 __pycache__
 *.pyc
 *.pyo
 *.pyd
+*.so
+
+# IDEs
+.vscode
+.idea
+*.sublime-*
+
+# OS files
 .DS_Store
+Thumbs.db
+.AppleDouble
+
+# Environment files
 .env
 .env.local
+.env.*.local
+
+# Python packaging
 *.egg-info
 dist
 build
+wheels
+
+# Testing
 .pytest_cache
 .coverage
-.venv
-venv
-ENV
+.tox
+htmlcov
+
+# Documentation and README (not needed in production Docker)
+README.md
+DOCKER_README.md
+*.md
+
+# Large data and results (use volume mounts instead)
+datasets
+results
+*.log
+logs
+
+# Development files
+.github
+.gitpod.yml
+dev
+test

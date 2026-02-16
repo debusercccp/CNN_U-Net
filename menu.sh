@@ -2,8 +2,8 @@
 
 # Menu to run CNN implementations with PyTorch or TensorFlow
 
-# Default dataset path
-DEFAULT_DATASET="/home/rocco/Documenti/Dataset/Segmentation"
+# Default dataset path (use Docker mount point)
+DEFAULT_DATASET="/app/datasets/Segmentation"
 DATASET_PATH="$DEFAULT_DATASET"
 
 show_dataset_menu() {
