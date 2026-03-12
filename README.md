@@ -9,13 +9,13 @@ per garantire riproducibilità indipendente dal sistema.
 
 ## Struttura del Progetto
 
-CNN_U-Net/
-├── CNN_pytorch.py       # Implementazione U-Net in PyTorch
-├── CNN_tensorflow.py    # Implementazione U-Net in TensorFlow
-├── menu.sh              # Menu interattivo da terminale
-├── requirements.txt     # Dipendenze Python
-├── Dockerfile           # Immagine Docker con tutte le dipendenze
-└── docker-compose.yml   # Configurazione dei servizi Docker
+  CNN_U-Net/
+  ├── CNN_pytorch.py       # Implementazione U-Net in PyTorch
+  ├── CNN_tensorflow.py    # Implementazione U-Net in TensorFlow
+  ├── menu.sh              # Menu interattivo da terminale
+  ├── requirements.txt     # Dipendenze Python
+  ├── Dockerfile           # Immagine Docker con tutte le dipendenze
+  └── docker-compose.yml   # Configurazione dei servizi Docker
 
 ---
 
